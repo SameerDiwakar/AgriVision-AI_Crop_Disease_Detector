@@ -1,6 +1,10 @@
 # 🌿 AgriVision - AI Crop Disease Detector
 
-**AgriVision** is an AI-powered Flutter mobile application designed to empower farmers, gardeners, and agricultural workers with instant plant health diagnostics and crop disease detection directly from leaf photographs.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://agrivision-app.vercel.app/)
+
+**AgriVision** is an AI-powered Flutter application designed to empower farmers, gardeners, and agricultural workers with instant plant health diagnostics and crop disease detection directly from leaf photographs.
+
+🔗 **Live Web App**: [https://agrivision-app.vercel.app/](https://agrivision-app.vercel.app/)
 
 ---
 
@@ -21,6 +25,7 @@
 - **State & Storage**: `shared_preferences` (Local History Storage)
 - **UI & Fonts**: `google_fonts`, Material Design 3
 - **Media**: `image_picker`
+- **Deployment**: [Vercel](https://agrivision-app.vercel.app/)
 
 ---
 
@@ -35,8 +40,8 @@
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/ai-crop-disease-detection.git
-   cd ai-crop-disease-detection
+   git clone https://github.com/surya-090906/AgriVision-AI_Crop_Disease_Detector.git
+   cd AgriVision-AI_Crop_Disease_Detector
    ```
 
 2. **Install Dependencies**
