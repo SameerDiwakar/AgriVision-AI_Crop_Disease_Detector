@@ -83,7 +83,7 @@ When AgriVision launches, the user is presented with a **Branch Selection Hub** 
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/surya-090906/AgriVision-AI_Crop_Disease_Detector.git
+   git clone https://github.com/SameerDiwakar/AgriVision-AI_Crop_Disease_Detector.git
    cd AgriVision-AI_Crop_Disease_Detector
    ```
 
