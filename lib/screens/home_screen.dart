@@ -7,6 +7,7 @@ import '../services/history_service.dart';
 import '../theme/app_theme.dart';
 import 'capture_screen.dart';
 import 'history_screen.dart';
+import 'prevention_home_screen.dart';
 import 'results_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -73,6 +74,15 @@ class _HomeScreenState extends State<HomeScreen> {
     ).then((_) => _loadRecentScans());
   }
 
+  void _openPreventionBranch() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PreventionHomeScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,12 +93,31 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Bar with AgriVision Branding & History Icon
+              // Top Bar with AgriVision Branding, Branch Switcher & History Icon
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
+                      if (Navigator.canPop(context))
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 10),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppTheme.borderColor),
+                              boxShadow: AppTheme.cardShadow,
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: AppTheme.primaryDark,
+                              size: 18,
+                            ),
+                          ),
+                        ),
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
@@ -116,11 +145,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           Text(
-                            'Crop Disease Detector',
+                            'Detection Branch (Reactive)',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontSize: 12,
                               color: AppTheme.textSecondary,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -128,50 +157,132 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
 
-                  // History Screen Action Button with Badge
-                  GestureDetector(
-                    onTap: _openHistory,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
+                  Row(
+                    children: [
+                      // Switch to Prevention Branch Action Button
+                      GestureDetector(
+                        onTap: _openPreventionBranch,
+                        child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: const Color(0xFFFFF8E1),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppTheme.borderColor),
+                            border: Border.all(color: const Color(0xFFFFD54F)),
                             boxShadow: AppTheme.cardShadow,
                           ),
                           child: const Icon(
-                            Icons.history_rounded,
-                            color: AppTheme.primaryDark,
+                            Icons.cloud_sync_rounded,
+                            color: Color(0xFFF57F17),
                             size: 22,
                           ),
                         ),
-                        if (_totalScanCount > 0)
-                          Positioned(
-                            top: -4,
-                            right: -4,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: const BoxDecoration(
-                                color: AppTheme.primary,
-                                shape: BoxShape.circle,
+                      ),
+                      const SizedBox(width: 8),
+
+                      // History Screen Action Button with Badge
+                      GestureDetector(
+                        onTap: _openHistory,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AppTheme.borderColor),
+                                boxShadow: AppTheme.cardShadow,
                               ),
-                              child: Text(
-                                '$_totalScanCount',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              child: const Icon(
+                                Icons.history_rounded,
+                                color: AppTheme.primaryDark,
+                                size: 22,
                               ),
                             ),
-                          ),
-                      ],
-                    ),
+                            if (_totalScanCount > 0)
+                              Positioned(
+                                top: -4,
+                                right: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: const BoxDecoration(
+                                    color: AppTheme.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    '$_totalScanCount',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Stage-Aware Fusion Announcement Banner (M4 Groundwork)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentPale,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.accent),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.shield_outlined,
+                        color: AppTheme.primaryDark, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'State B: Visible Symptom Scanner',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryDark,
+                            ),
+                          ),
+                          Text(
+                            'No visible lesions yet? Forecast risk before damage.',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10.5,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _openPreventionBranch,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        'Prevention →',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 24),

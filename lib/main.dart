@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'screens/branch_selection_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -13,10 +13,10 @@ class AgriVisionApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AgriVision',
+      title: 'AgriVision AI',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      home: const BranchSelectionScreen(),
     );
   }
 }

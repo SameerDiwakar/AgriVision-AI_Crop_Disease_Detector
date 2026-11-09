@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/plant_disease_model.dart';
 import '../theme/app_theme.dart';
 import '../widgets/treatment_card.dart';
+import 'prevention_home_screen.dart';
 
 class ResultsScreen extends StatelessWidget {
   final PlantDiseaseResult result;
@@ -269,6 +270,22 @@ class ResultsScreen extends StatelessWidget {
                   backgroundColor: AppTheme.primary,
                   elevation: 3,
                 ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Stage-Aware Link to Prevention Branch
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PreventionHomeScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.cloud_sync_rounded, color: AppTheme.primary),
+                label: const Text('Assess Weather Risk for This Field'),
               ),
 
               const SizedBox(height: 24),
