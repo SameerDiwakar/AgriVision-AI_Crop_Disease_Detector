@@ -9,10 +9,10 @@ class WeatherInputData {
   final double leafWetnessHours; // Hours (0 - 24)
   final double rainfall; // mm
 
-  // Engineered features (M3 Week 2 & 3)
-  final double rollingHumidityAvg; // F5: H_roll,t = 1/k * sum(H_t-i)
-  final double cumulativeLeafWetness; // F6: L_cum,t = sum(L_t-i)
-  final bool infectionWindowFlag; // F7: I_w = 1 if favourable, 0 otherwise
+  // Engineered biological features
+  final double rollingHumidityAvg; // Rolling humidity average (multi-day)
+  final double cumulativeLeafWetness; // Cumulative leaf wetness duration
+  final bool infectionWindowFlag; // Infection window flag (favourable conditions)
 
   WeatherInputData({
     required this.cropName,
@@ -191,7 +191,7 @@ class AnnRiskPrediction {
   }
 }
 
-/// Preventive Action Advisory (State A in M4 Groundwork)
+/// Preventive Action Advisory
 class PreventiveAdvisory {
   final String irrigationGuidance;
   final List<String> chemicalAndBioPreventives;

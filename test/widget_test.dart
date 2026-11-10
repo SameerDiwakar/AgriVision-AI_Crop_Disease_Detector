@@ -16,6 +16,6 @@ void main() {
     await tester.pumpWidget(const AgriVisionApp());
 
     // Verify that AgriVision app title is rendered.
-    expect(find.text('AgriVision AI'), findsOneWidget);
+    expect(find.text('AgriVision'), findsOneWidget);
   });
 }

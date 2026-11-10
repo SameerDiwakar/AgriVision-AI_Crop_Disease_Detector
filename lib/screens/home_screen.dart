@@ -145,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           Text(
-                            'Detection Branch (Reactive)',
+                            'Disease Detection',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontSize: 12,
                               color: AppTheme.textSecondary,
@@ -159,21 +159,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   Row(
                     children: [
-                      // Switch to Prevention Branch Action Button
+                      // Switch to Prevention Action Button
                       GestureDetector(
                         onTap: _openPreventionBranch,
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF8E1),
+                            color: const Color(0xFFE0F2FE),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFFFD54F)),
+                            border: Border.all(color: const Color(0xFFBAE6FD)),
                             boxShadow: AppTheme.cardShadow,
                           ),
                           child: const Icon(
-                            Icons.cloud_sync_rounded,
-                            color: Color(0xFFF57F17),
-                            size: 22,
+                            Icons.shield_outlined,
+                            color: Color(0xFF0284C7),
+                            size: 20,
                           ),
                         ),
                       ),
@@ -227,41 +227,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
-              // Stage-Aware Fusion Announcement Banner (M4 Groundwork)
+              // Clean Prevention Suggestion Banner
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: AppTheme.accentPale,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppTheme.accent),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.shield_outlined,
-                        color: AppTheme.primaryDark, size: 20),
+                        color: AppTheme.primaryDark, size: 18),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'State B: Visible Symptom Scanner',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryDark,
-                            ),
-                          ),
-                          Text(
-                            'No visible lesions yet? Forecast risk before damage.',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10.5,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        'Want to forecast risk before symptoms appear?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.primaryDark,
+                        ),
                       ),
                     ),
                     TextButton(
@@ -275,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(
                         'Prevention →',
                         style: GoogleFonts.poppins(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primary,
                         ),

@@ -70,35 +70,29 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
     final riskPercent = (pred.riskScore * 100).toStringAsFixed(0);
 
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Pre-Symptom Risk Report'),
+        title: const Text('Risk Assessment'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.swap_horiz_rounded),
-            onPressed: _switchToDetectionBranch,
-            tooltip: 'Switch to Detection Branch',
-          ),
-        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Hero Risk Gauge Banner
+              // Hero Risk Score Card
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: riskColor.withAlpha(120), width: 1.5),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.borderColor),
                   boxShadow: AppTheme.cardShadow,
                 ),
                 child: Column(
@@ -110,20 +104,18 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              input.cropName.toUpperCase(),
+                              input.cropName,
                               style: GoogleFonts.poppins(
-                                fontSize: 13,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.primary,
-                                letterSpacing: 1.0,
+                                color: AppTheme.textPrimary,
                               ),
                             ),
                             Text(
                               input.location,
                               style: GoogleFonts.poppins(
-                                fontSize: 14,
+                                fontSize: 13,
                                 color: AppTheme.textSecondary,
-                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -133,8 +125,7 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
                               horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: riskBgColor,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: riskColor.withAlpha(100)),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             pred.riskCategory,
@@ -150,16 +141,16 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
 
                     const SizedBox(height: 20),
 
-                    // Circular Risk Meter Display
+                    // Risk Progress Meter
                     Stack(
                       alignment: Alignment.center,
                       children: [
                         SizedBox(
-                          width: 140,
-                          height: 140,
+                          width: 130,
+                          height: 130,
                           child: CircularProgressIndicator(
                             value: pred.riskScore,
-                            strokeWidth: 12,
+                            strokeWidth: 10,
                             backgroundColor: AppTheme.borderColor,
                             valueColor: AlwaysStoppedAnimation<Color>(riskColor),
                             strokeCap: StrokeCap.round,
@@ -178,20 +169,11 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
                               ),
                             ),
                             Text(
-                              'RISK SCORE',
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textSecondary,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                            Text(
-                              '(${pred.riskScore.toStringAsFixed(2)})',
+                              'Outbreak Risk',
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
-                                color: riskColor,
+                                color: AppTheme.textSecondary,
                               ),
                             ),
                           ],
@@ -201,372 +183,198 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
 
                     const SizedBox(height: 18),
 
-                    // Lead Time Gained Alert (Milestone M4)
+                    // Lead time alert
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: riskBgColor,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.timer_outlined,
-                              color: riskColor, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              '${pred.estimatedLeadTimeDays} Days Lead Time Gained over Detect-and-Treat Baseline',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: riskColor,
-                              ),
+                          Icon(Icons.timer_outlined, color: riskColor, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Act within ${pred.estimatedLeadTimeDays} days before symptoms appear',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: riskColor,
                             ),
                           ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
 
-                    // Target Pathogen Identified
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.bug_report_rounded,
-                            size: 16, color: AppTheme.textSecondary),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Target Pathogen: ${pred.dominantPathogen}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'Primary Threat: ${pred.dominantPathogen}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // Summary Alert Banner
+              // Summary Advisory Banner
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: riskBgColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: riskColor.withAlpha(80)),
+                  border: Border.all(color: riskColor.withAlpha(60)),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      pred.isThresholdExceeded
-                          ? Icons.warning_amber_rounded
-                          : Icons.info_outline_rounded,
-                      color: riskColor,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        pred.advisory.summaryAlert,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.textPrimary,
-                          height: 1.45,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  pred.advisory.summaryAlert,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textPrimary,
+                    height: 1.45,
+                  ),
                 ),
               ),
 
-              const SizedBox(height: 22),
+              const SizedBox(height: 20),
 
-              // Pre-Symptom Preventive Advisory (State A Actions)
+              // Recommended Actions Section
               Text(
-                'PREVENTIVE ADVISORY (STATE A: PRE-SYMPTOM)',
+                'Preventive Recommendations',
                 style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textSecondary,
-                  letterSpacing: 0.8,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
                 ),
               ),
               const SizedBox(height: 10),
 
-              // 1. Irrigation & Canopy Moisture Control
+              // 1. Irrigation
               _buildAdvisoryCard(
-                icon: Icons.water_drop_rounded,
+                icon: Icons.water_drop_outlined,
                 iconColor: Colors.blue,
-                title: 'Irrigation & Canopy Management',
+                title: 'Irrigation Management',
                 content: pred.advisory.irrigationGuidance,
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
-              // 2. Chemical & Bio Preventives Schedule
+              // 2. Sprays
               _buildListAdvisoryCard(
-                icon: Icons.sanitizer_rounded,
+                icon: Icons.sanitizer_outlined,
                 iconColor: AppTheme.primary,
-                title: 'Preventive Spray & Bio-Control Schedule',
-                subtitle:
-                    'Apply prophylactic protection ahead of spore release window:',
+                title: 'Preventive Spray Schedule',
                 items: pred.advisory.chemicalAndBioPreventives,
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
-              // 3. Field Sanitation & Residue Control
+              // 3. Field Sanitation
               _buildListAdvisoryCard(
-                icon: Icons.cleaning_services_rounded,
+                icon: Icons.cleaning_services_outlined,
                 iconColor: Colors.brown,
-                title: 'Field Sanitation & Crop Residue',
-                subtitle:
-                    'Eliminate primary inoculum sources and improve airflow:',
+                title: 'Field Sanitation',
                 items: pred.advisory.fieldSanitationSteps,
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
-              // 4. Field Scouting Protocol
+              // 4. Scouting
               _buildAdvisoryCard(
                 icon: Icons.search_rounded,
                 iconColor: Colors.purple,
-                title: 'Field Scouting & Leaf Surveillance',
+                title: 'Monitoring & Scouting',
                 content: pred.advisory.scoutingProtocol,
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              // ANN Model Formulation Transparency Card (M3 Week 3)
+              // Clean Link to Detection Scanner if symptoms already visible
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppTheme.borderColor),
-                  boxShadow: AppTheme.cardShadow,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.psychology_rounded,
-                            color: AppTheme.primary, size: 22),
-                        const SizedBox(width: 8),
-                        Text(
-                          'ANN Regression Model Architecture',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _buildSpecRow('Model Type', 'Artificial Neural Network (Dense MLP Regression)'),
-                    _buildSpecRow('Inputs', '7 Features (4 Weather + 3 Engineered Biology Features)'),
-                    _buildSpecRow('Engineered Inputs', 'H_roll (Rolling Hum), L_cum (Cum Wetness), I_w (Infection Flag)'),
-                    _buildSpecRow('Loss & Optimizer', 'MSE Loss • Adam Optimizer (Adaptive Learning Rate)'),
-                    _buildSpecRow('Evaluation Benchmark', 'R² = ${pred.modelR2Benchmark} (Literature Benchmark: 0.96–0.98)'),
-                    _buildSpecRow('Decision Logic', 'Continuous Score [0–1] evaluated against threshold (0.65)'),
-
-                    const SizedBox(height: 14),
-                    const Divider(),
-                    const SizedBox(height: 10),
-
                     Text(
-                      'Feature Contributions to This Assessment:',
+                      'Already seeing spots on your leaves?',
                       style: GoogleFonts.poppins(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
                         color: AppTheme.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 8),
-
-                    ...pred.featureContributions.entries.map((entry) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: Text(
-                                entry.key,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: AppTheme.textSecondary,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 4,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: (entry.value / 0.35).clamp(0.0, 1.0),
-                                  backgroundColor: AppTheme.background,
-                                  valueColor: const AlwaysStoppedAnimation<Color>(
-                                      AppTheme.primaryLight),
-                                  minHeight: 6,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '+${(entry.value * 100).toStringAsFixed(0)}%',
-                              style: GoogleFonts.poppins(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryDark,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // =============================================================
-              // M4 STAGE-AWARE FUSION CALLOUT (Connecting Reactive Branch)
-              // =============================================================
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1B4332), Color(0xFF2D6A4F)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: AppTheme.softShadow,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(40),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.camera_enhance_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'State B: Symptoms Already Visible?',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 4),
                     Text(
-                      'If visible necrotic lesions, yellow spots, or rust pustules have already appeared on your crop, transition to the Detection Branch to confirm disease class with deep CNN leaf classification.',
+                      'If lesions have already developed, photograph the leaf to get a confirmed diagnosis and curative treatment.',
                       style: GoogleFonts.poppins(
-                        color: Colors.white.withAlpha(220),
-                        fontSize: 12.5,
-                        height: 1.45,
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
                       onPressed: _switchToDetectionBranch,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.accent,
-                        foregroundColor: AppTheme.primaryDark,
-                        elevation: 2,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.camera_alt_rounded, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Switch to Detection Branch Scanner',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
+                      icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                      label: const Text('Open Leaf Scanner'),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-              // Bottom Actions: Return to Hub
-              OutlinedButton(
+              // Return / New Assessment
+              ElevatedButton(
                 onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.refresh_rounded, size: 18),
                     const SizedBox(width: 8),
                     Text(
-                      'Assess Another Microclimate',
+                      'Assess Another Field',
                       style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
+
               if (_isSaved)
                 Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.check_circle_outline,
-                          size: 14, color: AppTheme.primary),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Assessment automatically saved to farm history',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'Assessment saved to history',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: AppTheme.textSecondary,
+                    ),
                   ),
                 ),
+
               const SizedBox(height: 16),
             ],
           ),
@@ -586,7 +394,7 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.borderColor),
         boxShadow: AppTheme.cardShadow,
       ),
@@ -595,16 +403,14 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, color: iconColor, size: 20),
+              Icon(icon, color: iconColor, size: 18),
               const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
                 ),
               ),
             ],
@@ -613,7 +419,7 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
           Text(
             content,
             style: GoogleFonts.poppins(
-              fontSize: 12.5,
+              fontSize: 12,
               color: AppTheme.textSecondary,
               height: 1.45,
             ),
@@ -627,7 +433,6 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
     required IconData icon,
     required Color iconColor,
     required String title,
-    required String subtitle,
     required List<String> items,
   }) {
     return Container(
@@ -635,7 +440,7 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.borderColor),
         boxShadow: AppTheme.cardShadow,
       ),
@@ -644,33 +449,22 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, color: iconColor, size: 20),
+              Icon(icon, color: iconColor, size: 18),
               const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: GoogleFonts.poppins(
-              fontSize: 11.5,
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
           const SizedBox(height: 8),
           ...items.map((it) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
+              padding: const EdgeInsets.symmetric(vertical: 2.5),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -695,38 +489,4 @@ class _PreventionResultScreenState extends State<PreventionResultScreen> {
       ),
     );
   }
-
-  Widget _buildSpecRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
-

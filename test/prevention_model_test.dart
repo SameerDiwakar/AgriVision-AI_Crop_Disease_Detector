@@ -3,8 +3,8 @@ import 'package:agri_vision/models/prevention_model.dart';
 import 'package:agri_vision/services/prevention_ann_service.dart';
 
 void main() {
-  group('Milestone M3 Weather Parameter & Feature Engineering Tests', () {
-    test('Calculates F5 Rolling Humidity, F6 Cumulative Wetness, and F7 Flag correctly', () {
+  group('Weather Parameter & Feature Engineering Tests', () {
+    test('Calculates rolling humidity, cumulative wetness, and infection flag correctly', () {
       final input = WeatherInputData.fromRaw(
         cropName: 'Wheat',
         location: 'Karnal, Haryana',
@@ -40,8 +40,8 @@ void main() {
     });
   });
 
-  group('Milestone M3 ANN Regression Risk Model Tests', () {
-    test('High threat microclimate triggers High/Critical Risk (score >= 0.65)', () {
+  group('ANN Regression Risk Model Tests', () {
+    test('High threat microclimate triggers High Risk (score >= 0.65)', () {
       final highRiskInput = WeatherInputData.fromRaw(
         cropName: 'Wheat',
         location: 'Karnal Field',

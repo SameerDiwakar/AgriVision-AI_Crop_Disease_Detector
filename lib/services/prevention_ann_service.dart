@@ -4,56 +4,56 @@ import 'package:http/http.dart' as http;
 import '../models/prevention_model.dart';
 
 /// Service implementing the ANN Regression Model and Weather-driven
-/// Risk Assessment pipeline formulated in Milestone M3 & M4.
+/// Risk Assessment pipeline.
 class PreventionAnnService {
   /// Literature benchmark R² value achieved for wheat rust and foliar blight models
   static const double literatureR2Benchmark = 0.972;
 
-  /// High risk advisory trigger threshold (Slide 6 & 7)
+  /// High risk advisory trigger threshold
   static const double criticalThreshold = 0.65;
   static const double moderateThreshold = 0.35;
 
-  /// Preset field station configurations for rapid testing and demonstrations
+  /// Preset field station configurations for rapid testing
   static final List<Map<String, dynamic>> presetFieldStations = [
     {
-      'label': '🌾 Karnal Field (High Rust Threat)',
+      'label': '🌾 High Risk (Wheat)',
       'crop': 'Wheat',
       'location': 'Karnal, Haryana',
       'temp': 20.5,
       'humidity': 92.0,
       'wetness': 11.5,
       'rainfall': 14.0,
-      'description': 'Continuous high humidity & leaf moisture ideal for Puccinia rust germination.',
+      'description': 'High humidity and canopy moisture suitable for fungal spore germination.',
     },
     {
-      'label': '🍅 Najafgarh Polyhouse (Tomato Blight Alert)',
+      'label': '🍅 High Risk (Tomato)',
       'crop': 'Tomato',
-      'location': 'Najafgarh, New Delhi',
+      'location': 'Najafgarh, Delhi',
       'temp': 23.0,
       'humidity': 88.0,
       'wetness': 9.0,
       'rainfall': 8.5,
-      'description': 'Optimal temperature & prolonged canopy wetness triggering Phytophthora sporulation.',
+      'description': 'Optimal temperature and leaf moisture triggering blight development.',
     },
     {
-      'label': '🥔 Punjab Station (Potato Moderate Watch)',
+      'label': '🥔 Moderate Risk (Potato)',
       'crop': 'Potato',
       'location': 'Ludhiana, Punjab',
       'temp': 17.5,
       'humidity': 76.0,
       'wetness': 5.0,
       'rainfall': 2.0,
-      'description': 'Moderate risk window opening; monitoring recommended before spray.',
+      'description': 'Moderate risk window opening; monitoring recommended.',
     },
     {
-      'label': '☀️ Jaipur Arid Zone (Safe / Low Risk)',
+      'label': '☀️ Safe / Low Risk',
       'crop': 'Mustard',
       'location': 'Jaipur, Rajasthan',
       'temp': 33.0,
       'humidity': 38.0,
       'wetness': 0.8,
       'rainfall': 0.0,
-      'description': 'Dry atmosphere, zero canopy wetness, minimal fungal pathogen viability.',
+      'description': 'Dry weather and minimal leaf wetness; pathogen pressure is low.',
     },
   ];
 
@@ -73,7 +73,7 @@ class PreventionAnnService {
     'Other / General Crop',
   ];
 
-  /// Formulated ANN Regression Model (Milestone M3 Week 3):
+  /// ANN Regression Risk Model:
   /// Takes the 7 engineered input features -> Dense Hidden Layers (non-linear activation)
   /// -> Single Output Neuron yielding continuous disease risk score in [0.0, 1.0].
   static AnnRiskPrediction predictDiseaseRisk(WeatherInputData input) {
@@ -97,7 +97,7 @@ class PreventionAnnService {
     final double normFlag = f7InfectionFlag;
 
     // 3. Dense Hidden Layer 1 (7 inputs -> 12 hidden neurons with ReLU activation)
-    // Weights calibrated to reflect leaf wetness and humidity as strongest predictors (M3 Week 1)
+    // Leaf wetness and humidity are primary predictors
     final List<double> h1 = _denseLayer(
       inputs: [
         normTempScore,
@@ -135,10 +135,10 @@ class PreventionAnnService {
     String riskCategory;
     if (finalRiskScore >= criticalThreshold) {
       riskLevel = RiskLevel.high;
-      riskCategory = 'High / Critical Risk';
+      riskCategory = 'High Risk';
     } else if (finalRiskScore >= moderateThreshold) {
       riskLevel = RiskLevel.moderate;
-      riskCategory = 'Moderate / Watch Risk';
+      riskCategory = 'Moderate Risk';
     } else {
       riskLevel = RiskLevel.low;
       riskCategory = 'Low / Safe';
@@ -146,7 +146,7 @@ class PreventionAnnService {
 
     final bool isExceeded = finalRiskScore >= criticalThreshold;
 
-    // 7. Estimated lead time days before visible symptoms appear (M4 Measure Lead Time)
+    // 7. Estimated lead time days before visible symptoms appear
     // High risk gives 3-5 days lead time to act; Moderate gives 6-8 days.
     int leadTimeDays;
     if (finalRiskScore >= 0.75) {
@@ -163,18 +163,18 @@ class PreventionAnnService {
     final String dominantPathogen =
         _identifyDominantPathogen(input.cropName, input.temperature, input.relativeHumidity);
 
-    // 9. Feature relative contributions (for interpretability and farmer trust)
+    // 9. Feature relative contributions (for interpretability)
     final Map<String, double> contributions = {
       'Leaf Wetness (Hrs)': double.parse((normWetness * 0.28).toStringAsFixed(2)),
-      'Cumulative Wetness (F6)': double.parse((normCumWetness * 0.22).toStringAsFixed(2)),
+      'Cumulative Wetness': double.parse((normCumWetness * 0.22).toStringAsFixed(2)),
       'Relative Humidity (%)': double.parse((normHum * 0.18).toStringAsFixed(2)),
-      'Rolling Humidity (F5)': double.parse((normRollHum * 0.14).toStringAsFixed(2)),
-      'Infection Window (F7)': double.parse((normFlag * 0.10).toStringAsFixed(2)),
-      'Temperature Range (°C)': double.parse((normTempScore * 0.05).toStringAsFixed(2)),
-      'Rainfall Splash (mm)': double.parse((normRain * 0.03).toStringAsFixed(2)),
+      'Rolling Humidity': double.parse((normRollHum * 0.14).toStringAsFixed(2)),
+      'Infection Window': double.parse((normFlag * 0.10).toStringAsFixed(2)),
+      'Temperature Range': double.parse((normTempScore * 0.05).toStringAsFixed(2)),
+      'Rainfall Splash': double.parse((normRain * 0.03).toStringAsFixed(2)),
     };
 
-    // 10. Generate State A: Pre-Symptom Preventive Advisory (Slide 7)
+    // 10. Generate Preventive Advisory
     final PreventiveAdvisory advisory = _generatePreventiveAdvisory(
       cropName: input.cropName,
       riskScore: finalRiskScore,
@@ -412,10 +412,8 @@ class PreventionAnnService {
     );
   }
 
-  // =========================================================================
-  // ANN REGRESSION WEIGHT MATRICES & ACTIVATION FUNCTIONS (Milestone M3)
-  // Calibrated feed-forward regression model (7 -> 12 -> 6 -> 1)
-  // =========================================================================
+  // ANN Regression Matrices & Activation Functions
+  // Feed-forward regression model (7 -> 12 -> 6 -> 1)
 
   static double _relu(double x) => x > 0.0 ? x : 0.0;
 

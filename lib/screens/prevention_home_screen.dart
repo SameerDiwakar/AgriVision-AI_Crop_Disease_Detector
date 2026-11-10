@@ -16,7 +16,6 @@ class PreventionHomeScreen extends StatefulWidget {
 }
 
 class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
-  // Inputs
   String _selectedCrop = 'Wheat';
   final TextEditingController _customCropController = TextEditingController();
   final TextEditingController _locationController =
@@ -28,7 +27,6 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
   double _rainfall = 12.0; // mm
 
   bool _isFetchingLiveWeather = false;
-  String? _weatherFetchMessage;
   List<PreventionHistoryRecord> _recentRecords = [];
 
   @override
@@ -65,7 +63,7 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Applied preset: ${preset['label']}'),
+        content: Text('Loaded ${preset['label']} preset'),
         duration: const Duration(seconds: 2),
         backgroundColor: AppTheme.primaryDark,
       ),
@@ -83,7 +81,6 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
 
     setState(() {
       _isFetchingLiveWeather = true;
-      _weatherFetchMessage = 'Fetching live open-meteo station data...';
     });
 
     final WeatherInputData liveData =
@@ -102,13 +99,12 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
         _leafWetnessHours = liveData.leafWetnessHours;
         _rainfall = liveData.rainfall;
         _locationController.text = liveData.location;
-        _weatherFetchMessage = null;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Updated live weather for ${liveData.location}: ${_temperature.toStringAsFixed(1)}°C, ${_relativeHumidity.toStringAsFixed(0)}% RH'),
+              'Fetched weather for ${liveData.location}: ${_temperature.toStringAsFixed(1)}°C, ${_relativeHumidity.toStringAsFixed(0)}% RH'),
           backgroundColor: AppTheme.primary,
         ),
       );
@@ -124,9 +120,8 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
 
     final location = _locationController.text.trim().isNotEmpty
         ? _locationController.text.trim()
-        : 'Field Station';
+        : 'Field Location';
 
-    // 1. Build WeatherInputData (computes F5, F6, F7)
     final inputData = WeatherInputData.fromRaw(
       cropName: cropName,
       location: location,
@@ -136,11 +131,9 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
       rainfall: _rainfall,
     );
 
-    // 2. Formulated ANN Regression Model
     final AnnRiskPrediction prediction =
         PreventionAnnService.predictDiseaseRisk(inputData);
 
-    // 3. Navigate to results screen
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -168,116 +161,58 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Current live computed engineered features
-    final currentInput = WeatherInputData.fromRaw(
-      cropName: _selectedCrop,
-      location: _locationController.text,
-      temperature: _temperature,
-      relativeHumidity: _relativeHumidity,
-      leafWetnessHours: _leafWetnessHours,
-      rainfall: _rainfall,
-    );
-
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: Column(
-          children: [
-            const Text('Prevention Branch'),
-            Text(
-              'Weather-Driven Proactive Risk Model',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: AppTheme.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
+        title: const Text('Disease Prevention'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
-          tooltip: 'Return to Branch Chooser',
+          tooltip: 'Back',
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.history_rounded),
             onPressed: _openHistory,
-            tooltip: 'Prevention History',
+            tooltip: 'Assessment History',
           ),
           IconButton(
-            icon: const Icon(Icons.swap_horiz_rounded),
+            icon: const Icon(Icons.camera_alt_outlined),
             onPressed: _switchToDetectionBranch,
-            tooltip: 'Switch to Detection Branch',
+            tooltip: 'Go to Leaf Scanner',
           ),
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Stage Fusion Quick Switcher Banner
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppTheme.accentPale,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppTheme.accent),
+              // Intro headline
+              Text(
+                'Pre-Symptom Risk Assessment',
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline_rounded,
-                        color: AppTheme.primaryDark, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Proactive Mode (State A): Forecast disease risk before symptoms appear.',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11.5,
-                          color: AppTheme.primaryDark,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: _switchToDetectionBranch,
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        'Detection →',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primary,
-                        ),
-                      ),
-                    ),
-                  ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Enter field weather conditions to estimate disease outbreak probability.',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: AppTheme.textSecondary,
                 ),
               ),
 
               const SizedBox(height: 18),
 
-              // Preset Field Conditions Carousel / Chips
-              Text(
-                'PRESET FIELD MICROCLIMATES',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textSecondary,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 8),
+              // Quick Preset Chips
               SizedBox(
-                height: 38,
+                height: 36,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -291,29 +226,29 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
                       label: Text(
                         preset['label'] as String,
                         style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                           color: AppTheme.textPrimary,
                         ),
                       ),
                       backgroundColor: Colors.white,
                       side: const BorderSide(color: AppTheme.borderColor),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       onPressed: () => _applyPreset(preset),
                     );
                   },
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
-              // Crop & Location Card
-              _buildSectionCard(
-                title: 'Crop & Location Parameters',
+              // Card 1: Crop & Location
+              _buildCleanCard(
+                title: 'Crop & Location',
                 icon: Icons.grass_rounded,
                 children: [
-                  // Crop Selector
                   Text(
-                    'Select Target Plant / Crop',
+                    'Plant / Crop',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -332,7 +267,7 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
                       child: DropdownButton<String>(
                         value: _selectedCrop,
                         isExpanded: true,
-                        icon: const Icon(Icons.arrow_drop_down_rounded,
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded,
                             color: AppTheme.primary),
                         items: [
                           ...PreventionAnnService.commonCrops,
@@ -362,9 +297,7 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
                     TextField(
                       controller: _customCropController,
                       decoration: InputDecoration(
-                        labelText: 'Enter Plant / Crop Name',
-                        hintText: 'e.g. Barley, Soybean, Capsicum',
-                        prefixIcon: const Icon(Icons.eco_rounded, size: 20),
+                        hintText: 'Enter crop name (e.g. Barley, Mustard)',
                         filled: true,
                         fillColor: AppTheme.background,
                         contentPadding: const EdgeInsets.symmetric(
@@ -380,9 +313,8 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Location Input + Live Fetch Button
                   Text(
-                    'Farm Field Location',
+                    'Field Location',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -396,9 +328,9 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
                         child: TextField(
                           controller: _locationController,
                           decoration: InputDecoration(
-                            hintText: 'e.g. Najafgarh, New Delhi / Karnal',
-                            prefixIcon: const Icon(Icons.location_on_rounded,
-                                size: 20, color: AppTheme.primary),
+                            hintText: 'e.g. Karnal, Haryana',
+                            prefixIcon: const Icon(Icons.location_on_outlined,
+                                size: 18, color: AppTheme.primary),
                             filled: true,
                             fillColor: AppTheme.background,
                             contentPadding: const EdgeInsets.symmetric(
@@ -416,10 +348,11 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
                         onPressed:
                             _isFetchingLiveWeather ? null : _fetchLiveWeather,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryDark,
+                          backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 14),
+                          elevation: 0,
                           minimumSize: Size.zero,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -427,8 +360,8 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
                         ),
                         child: _isFetchingLiveWeather
                             ? const SizedBox(
-                                width: 18,
-                                height: 18,
+                                width: 16,
+                                height: 16,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   color: Colors.white,
@@ -437,14 +370,13 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
                             : Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.cloud_download_rounded,
-                                      size: 16),
+                                  const Icon(Icons.cloud_outlined, size: 16),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Live',
                                     style: GoogleFonts.poppins(
                                       fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ],
@@ -455,189 +387,98 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
                 ],
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // 4 Core Environmental Parameters Section (M3 Week 1)
-              _buildSectionCard(
-                title: '4 Finalised Weather Parameters',
-                subtitle:
-                    'Identified from plant pathology literature as primary drivers of disease onset.',
-                icon: Icons.thermostat_rounded,
+              // Card 2: Weather Parameters (Minimal, no math formulas, no clutter)
+              _buildCleanCard(
+                title: 'Weather Conditions',
+                icon: Icons.wb_sunny_outlined,
                 children: [
-                  // Parameter 1: Temperature
-                  _buildSliderParameter(
-                    label: '01 Temperature (°C)',
-                    description:
-                        'Defines pathogen-favourable range (optimum: 16–26°C)',
+                  _buildCleanSlider(
+                    label: 'Temperature',
                     value: _temperature,
                     min: 5.0,
                     max: 45.0,
                     unit: '°C',
                     onChanged: (v) => setState(() => _temperature = v),
-                    icon: Icons.device_thermostat_rounded,
                     color: Colors.orange,
                   ),
                   const Divider(height: 24),
-
-                  // Parameter 2: Relative Humidity
-                  _buildSliderParameter(
-                    label: '02 Relative Humidity (%)',
-                    description:
-                        'Sustained high moisture enables spore germination (>78%)',
+                  _buildCleanSlider(
+                    label: 'Relative Humidity',
                     value: _relativeHumidity,
                     min: 10.0,
                     max: 100.0,
                     unit: '%',
                     onChanged: (v) => setState(() => _relativeHumidity = v),
-                    icon: Icons.water_drop_rounded,
                     color: Colors.blue,
                   ),
                   const Divider(height: 24),
-
-                  // Parameter 3: Leaf Wetness Duration
-                  _buildSliderParameter(
-                    label: '03 Leaf Wetness Duration (Hours)',
-                    description:
-                        'Single strongest predictor in literature — continuous wet canopy period',
+                  _buildCleanSlider(
+                    label: 'Leaf Wetness Duration',
                     value: _leafWetnessHours,
                     min: 0.0,
                     max: 24.0,
                     unit: ' hrs',
                     onChanged: (v) => setState(() => _leafWetnessHours = v),
-                    icon: Icons.schedule_rounded,
                     color: Colors.teal,
                   ),
                   const Divider(height: 24),
-
-                  // Parameter 4: Rainfall
-                  _buildSliderParameter(
-                    label: '04 Daily Rainfall (mm)',
-                    description:
-                        'Drives splash dispersal of spores & prolongs wetness',
+                  _buildCleanSlider(
+                    label: 'Daily Rainfall',
                     value: _rainfall,
                     min: 0.0,
                     max: 50.0,
                     unit: ' mm',
                     onChanged: (v) => setState(() => _rainfall = v),
-                    icon: Icons.grain_rounded,
                     color: Colors.indigo,
                   ),
-
-                  const SizedBox(height: 12),
-                  // Drop justification note from Slide 3
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.amber.shade200),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.check_circle_outline,
-                            size: 16, color: Colors.brown),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Wind speed and dew point were evaluated and excluded to reduce overfitting on modest field datasets and focus on the highest predictive variables.',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10.5,
-                              color: Colors.brown.shade800,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
 
-              // Feature Engineering Live View (M3 Week 2: 7 Engineered Features)
-              _buildSectionCard(
-                title: 'Engineered Features (M3 Formulation)',
-                subtitle:
-                    'Derived features describe the biological infection process over time rather than just single-day weather.',
-                icon: Icons.hub_rounded,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildEngineeredBadge(
-                          code: 'F5',
-                          title: 'Rolling Humidity Avg',
-                          formula: 'H_roll,t = 1/k Σ H_t-i',
-                          value:
-                              '${currentInput.rollingHumidityAvg.toStringAsFixed(1)}%',
-                          highlight: currentInput.rollingHumidityAvg >= 80.0,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildEngineeredBadge(
-                          code: 'F6',
-                          title: 'Cumulative Wetness',
-                          formula: 'L_cum,t = Σ L_t-i',
-                          value:
-                              '${currentInput.cumulativeLeafWetness.toStringAsFixed(1)} hrs',
-                          highlight: currentInput.cumulativeLeafWetness >= 12.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  _buildInfectionWindowBadge(currentInput.infectionWindowFlag),
-                ],
-              ),
-
-              const SizedBox(height: 26),
-
-              // Run ANN Regression Prediction Button
+              // Primary Action Button
               ElevatedButton(
                 onPressed: _runRiskPrediction,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
-                  elevation: 4,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.analytics_rounded, size: 22),
-                    const SizedBox(width: 10),
+                    const Icon(Icons.analytics_outlined, size: 20),
+                    const SizedBox(width: 8),
                     Text(
-                      'Compute Disease Risk (ANN Model)',
+                      'Assess Outbreak Risk',
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 0.3,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
-              // Recent Risk Assessments (if any)
+              // Recent Risk Assessments (Clean list)
               if (_recentRecords.isNotEmpty) ...[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'RECENT ASSESSMENTS',
+                      'Recent Assessments',
                       style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textSecondary,
-                        letterSpacing: 0.8,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
                       ),
                     ),
                     TextButton(
@@ -664,26 +505,33 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: AppTheme.borderColor),
+                      ),
                       child: ListTile(
+                        dense: true,
                         leading: CircleAvatar(
-                          backgroundColor: color.withAlpha(35),
-                          child: Icon(Icons.shield_rounded, color: color),
+                          radius: 16,
+                          backgroundColor: color.withAlpha(25),
+                          child: Icon(Icons.shield_outlined, color: color, size: 16),
                         ),
                         title: Text(
                           '${rec.inputData.cropName} • ${rec.inputData.location}',
                           style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                             fontSize: 13,
                           ),
                         ),
                         subtitle: Text(
-                          'Risk: ${(rec.prediction.riskScore * 100).toStringAsFixed(0)}% • ${rec.prediction.riskCategory}',
+                          '${(rec.prediction.riskScore * 100).toStringAsFixed(0)}% Risk (${rec.prediction.riskCategory})',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             color: AppTheme.textSecondary,
                           ),
                         ),
-                        trailing: const Icon(Icons.chevron_right_rounded),
+                        trailing: const Icon(Icons.chevron_right_rounded, size: 18),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -701,7 +549,7 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
                 ),
               ],
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -709,9 +557,8 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
     );
   }
 
-  Widget _buildSectionCard({
+  Widget _buildCleanCard({
     required String title,
-    String? subtitle,
     required IconData icon,
     required List<Widget> children,
   }) {
@@ -720,7 +567,7 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.borderColor),
         boxShadow: AppTheme.cardShadow,
       ),
@@ -729,54 +576,32 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.accentPale,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: AppTheme.primary, size: 20),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
+              Icon(icon, color: AppTheme.primary, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
                 ),
               ),
             ],
           ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              subtitle,
-              style: GoogleFonts.poppins(
-                fontSize: 11.5,
-                color: AppTheme.textSecondary,
-                height: 1.4,
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           ...children,
         ],
       ),
     );
   }
 
-  Widget _buildSliderParameter({
+  Widget _buildCleanSlider({
     required String label,
-    required String description,
     required double value,
     required double min,
     required double max,
     required String unit,
     required ValueChanged<double> onChanged,
-    required IconData icon,
     required Color color,
   }) {
     return Column(
@@ -785,25 +610,19 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Icon(icon, size: 18, color: color),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ],
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: AppTheme.accentPale,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 '${value.toStringAsFixed(1)}$unit',
@@ -817,151 +636,23 @@ class _PreventionHomeScreenState extends State<PreventionHomeScreen> {
           ],
         ),
         const SizedBox(height: 2),
-        Text(
-          description,
-          style: GoogleFonts.poppins(
-            fontSize: 10.5,
-            color: AppTheme.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 4),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: AppTheme.primary,
             inactiveTrackColor: AppTheme.borderColor,
             thumbColor: AppTheme.primaryDark,
-            overlayColor: AppTheme.primary.withAlpha(40),
-            trackHeight: 5,
+            overlayColor: AppTheme.primary.withAlpha(30),
+            trackHeight: 4,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
           ),
           child: Slider(
             value: value,
             min: min,
             max: max,
-            onChanged: (v) =>
-                onChanged(double.parse(v.toStringAsFixed(1))),
+            onChanged: (v) => onChanged(double.parse(v.toStringAsFixed(1))),
           ),
         ),
       ],
     );
   }
-
-  Widget _buildEngineeredBadge({
-    required String code,
-    required String title,
-    required String formula,
-    required String value,
-    required bool highlight,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: highlight
-            ? const Color(0xFFFFF3E0)
-            : AppTheme.background,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: highlight ? Colors.orange : AppTheme.borderColor,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  code,
-                  style: GoogleFonts.poppins(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              Text(
-                value,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: highlight ? Colors.deepOrange : AppTheme.primaryDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          Text(
-            formula,
-            style: GoogleFonts.poppins(
-              fontSize: 9,
-              color: AppTheme.textSecondary,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfectionWindowBadge(bool isActive) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isActive ? Colors.red.shade300 : Colors.green.shade300,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isActive ? Icons.warning_amber_rounded : Icons.check_circle_rounded,
-            color: isActive ? AppTheme.diseasedRed : AppTheme.primary,
-            size: 20,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'F7: Infection Window Flag: ${isActive ? "ACTIVE (I_w = 1)" : "INACTIVE (I_w = 0)"}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isActive ? AppTheme.diseasedRed : AppTheme.primary,
-                  ),
-                ),
-                Text(
-                  isActive
-                      ? 'Simultaneous favourable temperature, humidity & wetness threshold met.'
-                      : 'Environmental conditions currently outside pathogen germination envelope.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 10.5,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
-
