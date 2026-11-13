@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/plant_disease_model.dart';
 import '../models/scan_history_record.dart';
@@ -22,6 +24,7 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
   String _loadingMessage = 'Preparing leaf image...';
   String? _errorMessage;
   bool _isNonPlantError = false;
+  bool _isQuotaError = false;
   final ImagePicker _picker = ImagePicker();
 
   late AnimationController _animController;
@@ -62,12 +65,14 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
           _selectedImageBytes = bytes;
           _errorMessage = null;
           _isNonPlantError = false;
+          _isQuotaError = false;
         });
       }
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to select image: $e';
         _isNonPlantError = false;
+        _isQuotaError = false;
       });
     }
   }
@@ -79,10 +84,10 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
       _isLoading = true;
       _errorMessage = null;
       _isNonPlantError = false;
+      _isQuotaError = false;
       _loadingMessage = 'Connecting to AgriVision AI...';
     });
 
-    // Simulate animated loading messages
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted && _isLoading) {
         setState(() => _loadingMessage = 'Scanning leaf veins & lesion spots...');
@@ -123,7 +128,6 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
 
       if (!mounted) return;
 
-      // Navigate to Results Screen with Hero transition
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -135,12 +139,101 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
       );
     } catch (e) {
       if (!mounted) return;
+      final bool isQuota = e is PlantApiServiceException && (e.isQuotaExceeded || e.isApiKeyError);
       setState(() {
         _isLoading = false;
         _isNonPlantError = false;
+        _isQuotaError = isQuota;
         _errorMessage = e.toString();
       });
     }
+  }
+
+  void _useDemoDiagnosis() async {
+    final result = PlantApiService.generateDemoResult(
+      imageBase64: _selectedImageBytes != null ? base64Encode(_selectedImageBytes!) : null,
+    );
+
+    final record = ScanHistoryRecord.fromResult(
+      result: result,
+      imagePath: _selectedXFile?.path ?? '',
+    );
+    await HistoryService.saveScan(record);
+
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ResultsScreen(
+          result: result,
+          imageBytes: _selectedImageBytes,
+        ),
+      ),
+    );
+  }
+
+  void _showApiKeyDialog() async {
+    final currentKey = await PlantApiService.getActiveApiKey();
+    final controller = TextEditingController(text: currentKey);
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Plant.id API Key Settings',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Get a free API key at web.plant.id/api (or admin.kindwise.com) and paste it below:',
+              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: 'Enter Plant.id API key',
+                filled: true,
+                fillColor: AppTheme.background,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppTheme.borderColor),
+                ),
+              ),
+              style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await PlantApiService.setCustomApiKey(controller.text);
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('API Key updated successfully!'),
+                    backgroundColor: AppTheme.primary,
+                  ),
+                );
+              }
+            },
+            child: const Text('Save Key'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -152,89 +245,67 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.key_rounded),
+            tooltip: 'Configure API Key',
+            onPressed: _showApiKeyDialog,
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Main Interactive Area
+              // Central Image Capture/Preview Area
               Expanded(
                 child: _isLoading
                     ? _buildLoadingWidget()
                     : _errorMessage != null
                         ? _buildErrorWidget()
-                        : _buildImagePreviewWidget(),
+                        : _selectedImageBytes != null
+                            ? _buildImagePreviewWidget()
+                            : _buildPlaceholderWidget(),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              // Bottom Action Buttons
+              // Bottom Button Bar
               if (!_isLoading) ...[
-                if (_selectedImageBytes == null) ...[
-                  // Primary Action Buttons for initial pick
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _pickImage(ImageSource.camera),
-                          icon: const Icon(Icons.camera_alt_rounded),
-                          label: const Text('Take Photo'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            minimumSize: const Size(double.infinity, 56),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _pickImage(ImageSource.gallery),
-                          icon: const Icon(Icons.photo_library_rounded),
-                          label: const Text('Gallery'),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 56),
-                          ),
-                        ),
-                      ),
-                    ],
+                if (_selectedImageBytes != null && _errorMessage == null)
+                  ElevatedButton.icon(
+                    onPressed: _analyzeLeaf,
+                    icon: const Icon(Icons.analytics_rounded),
+                    label: const Text('Analyze Leaf Disease'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      elevation: 3,
+                    ),
                   ),
-                ] else ...[
-                  // Action buttons when image is chosen
-                  Column(
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: _analyzeLeaf,
-                        icon: const Icon(Icons.analytics_rounded),
-                        label: const Text('Analyze Leaf Disease'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
-                          elevation: 4,
-                        ),
+
+                if (_selectedImageBytes != null) const SizedBox(height: 12),
+
+                // Dual Selection Option Buttons (Camera / Gallery)
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _pickImage(ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt_rounded),
+                        label: Text(_selectedImageBytes == null ? 'Camera' : 'Retake'),
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _pickImage(ImageSource.camera),
-                              icon: const Icon(Icons.refresh_rounded),
-                              label: const Text('Retake'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _pickImage(ImageSource.gallery),
-                              icon: const Icon(Icons.photo_library_outlined),
-                              label: const Text('Choose Other'),
-                            ),
-                          ),
-                        ],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _pickImage(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library_rounded),
+                        label: Text(_selectedImageBytes == null ? 'Gallery' : 'Choose Other'),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ],
             ],
           ),
@@ -243,57 +314,62 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildImagePreviewWidget() {
-    if (_selectedImageBytes == null) {
-      return Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.borderColor, width: 2),
-          boxShadow: AppTheme.cardShadow,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                color: AppTheme.accentPale,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.add_a_photo_rounded,
-                size: 54,
-                color: AppTheme.primary,
+  Widget _buildPlaceholderWidget() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.accentPale,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.add_a_photo_rounded,
+              size: 56,
+              color: AppTheme.primary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Upload a Leaf Photo',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              'Capture a close-up photo of the crop leaf displaying visible disease symptoms.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.textSecondary,
+                height: 1.5,
               ),
             ),
-            const SizedBox(height: 20),
-            Text(
-              'No Leaf Selected',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                'Take a photo of an infected crop leaf or choose an existing photo from gallery.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+          ),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildImagePreviewWidget() {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.black,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.borderColor),
         boxShadow: AppTheme.cardShadow,
       ),
       child: ClipRRect(
@@ -426,6 +502,7 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
 
   Widget _buildErrorWidget() {
     final bool isNonPlant = _isNonPlantError;
+    final bool isQuota = _isQuotaError;
 
     return Container(
       width: double.infinity,
@@ -439,58 +516,84 @@ class _CaptureScreenState extends State<CaptureScreen> with SingleTickerProvider
         ),
         boxShadow: AppTheme.cardShadow,
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: (isNonPlant ? AppTheme.warningOrange : AppTheme.diseasedRed)
-                  .withAlpha(30),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isNonPlant ? Icons.no_photography_rounded : Icons.wifi_off_rounded,
-              size: 52,
-              color: isNonPlant ? AppTheme.warningOrange : AppTheme.diseasedRed,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            isNonPlant ? "Doesn't Look Like a Plant" : 'Analysis Failed',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              _errorMessage ?? 'An unknown error occurred.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.textSecondary,
-                height: 1.5,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: (isNonPlant ? AppTheme.warningOrange : AppTheme.diseasedRed)
+                    .withAlpha(30),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isNonPlant
+                    ? Icons.no_photography_rounded
+                    : (isQuota ? Icons.cloud_off_rounded : Icons.wifi_off_rounded),
+                size: 48,
+                color: isNonPlant ? AppTheme.warningOrange : AppTheme.diseasedRed,
               ),
             ),
-          ),
-          const SizedBox(height: 28),
-          ElevatedButton.icon(
-            onPressed: () {
-              setState(() {
-                _errorMessage = null;
-                _isNonPlantError = false;
-              });
-            },
-            icon: const Icon(Icons.replay_rounded),
-            label: const Text('Try Another Photo'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              minimumSize: const Size(200, 50),
+            const SizedBox(height: 16),
+            Text(
+              isNonPlant
+                  ? "Doesn't Look Like a Plant"
+                  : (isQuota ? 'API Quota Limit Reached' : 'Analysis Failed'),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                isQuota
+                    ? 'The Plant.id API key free credits have been exhausted (70/70 used). You can enter a new API key or proceed with demo diagnosis.'
+                    : (_errorMessage ?? 'An unknown error occurred.'),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+            if (isQuota) ...[
+              ElevatedButton.icon(
+                onPressed: _showApiKeyDialog,
+                icon: const Icon(Icons.key_rounded, size: 18),
+                label: const Text('Update API Key'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  minimumSize: const Size(220, 46),
+                ),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: _useDemoDiagnosis,
+                icon: const Icon(Icons.science_outlined, size: 18),
+                label: const Text('Continue with Demo Diagnosis'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(220, 46),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _errorMessage = null;
+                  _isNonPlantError = false;
+                  _isQuotaError = false;
+                });
+              },
+              icon: const Icon(Icons.replay_rounded, size: 18),
+              label: const Text('Try Another Photo'),
+            ),
+          ],
+        ),
       ),
     );
   }
